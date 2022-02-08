@@ -1,0 +1,60 @@
+/* reading from several files */
+
+%option noyywrap
+
+%{
+int chars = 0;
+int words = 0;
+int lines = 0;
+
+int totchars = 0;
+int totwords = 0;
+int totlines = 0;
+%}
+
+%%
+
+[A-Za-z]+ { words++; chars += strlen(yytext); }
+\n {lines++; chars++; }
+. {chars++;}
+
+%%
+
+main(int argc, char** argv)
+{
+int i;
+
+if(argc<2)
+{
+/* reading from input */
+
+yylex();
+printf("%d %d %d\n", lines, words, chars);
+return 0;
+}
+
+for(int i=1;i<argc;i++)
+{
+FILE* f = fopen(argv[i], "r");
+
+if(!f)
+{
+perror(argv[i]);
+return 1;
+}
+
+yyrestart(f);
+yylex();
+fclose(f);
+
+printf("%d %d %d %s\n", lines, words, chars, argv[i]);
+totchars+=chars; chars = 0;
+totwords+=words; words = 0;
+totlines+=lines; lines = 0;
+
+}
+
+printf("%d %d %d\n", totlines, totwords, totchars);
+
+return 0;
+}
